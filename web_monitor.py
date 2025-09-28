@@ -105,13 +105,26 @@ class WebMonitor:
             print(f"❌ Failed to load cookies: {e}")
             return None
     
-    def should_send_email(self):
-        """Check if it's time to send a 3-hour email"""
-        if self.last_email_sent is None:
-            return True
+    def should_send_hourly_email(self):
+        """Check if it's time to send an hourly email (at 42 minutes past each hour)"""
+        now = datetime.now()
+        current_minute = now.minute
         
-        time_since_last = datetime.now() - self.last_email_sent
-        return time_since_last.total_seconds() >= 10800  # 3 hours = 10800 seconds
+        # Check if it's exactly 42 minutes past the hour
+        if current_minute == 42:
+            # Check if we already sent an email this hour
+            if self.last_email_sent is None:
+                return True
+            
+            # Check if the last email was sent in a different hour
+            last_hour = self.last_email_sent.hour
+            current_hour = now.hour
+            
+            # If it's a new hour (or new day), send email
+            if current_hour != last_hour:
+                return True
+        
+        return False
     
     def log_event(self, message):
         """Log events to file"""
@@ -136,38 +149,67 @@ class WebMonitor:
                 if is_online:
                     print("🎉 SELLER IS ONLINE!")
                     
-                    # Send email notification only every 3 hours
-                    if self.should_send_email():
-                        subject = "🎉 TradingView Seller is ONLINE!"
+                    # Send hourly email notification at 42 minutes past each hour
+                    if self.should_send_hourly_email():
+                        subject = f"🕐 TradingView Hourly Report - {self.last_check.strftime('%H:%M')}"
                         email_message = f"""
-TradingView Cookie Alert!
+TradingView Hourly Status Report
 
-The seller is now ONLINE and fresh cookies are available!
-
-Status: {message}
 Time: {self.last_check.strftime('%Y-%m-%d %H:%M:%S')}
+Status: {message}
 Cookies Saved: {len(self.last_cookies) if self.last_cookies else 0} cookies
 
-You can now:
-1. Run the tool to get fresh cookies
+SELLER STATUS: ONLINE ✅
+Fresh cookies are available and automatically saved!
+
+You can:
+1. Download fresh cookies: https://tradingview-monitor.onrender.com/download-browser-import
 2. Import cookies to your browser
 3. Access premium TradingView features
 
-Cookies are automatically saved for offline access!
+This is your hourly update (sent at 42 minutes past each hour).
+Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
 """
                         
                         if self.send_email_notification(subject, email_message):
-                            print("📧 3-hour email notification sent!")
+                            print("📧 Hourly email notification sent!")
                             self.last_email_sent = datetime.now()
                         else:
                             print("❌ Failed to send email notification")
                     else:
-                        print("⏰ Email notification skipped (3-hour interval)")
+                        print("⏰ Email notification skipped (not 42 minutes past hour)")
                 else:
                     print("⏳ Seller is offline. Waiting for next check...")
+                    
+                    # Send hourly email even when seller is offline
+                    if self.should_send_hourly_email():
+                        subject = f"🕐 TradingView Hourly Report - {self.last_check.strftime('%H:%M')} (OFFLINE)"
+                        email_message = f"""
+TradingView Hourly Status Report
+
+Time: {self.last_check.strftime('%Y-%m-%d %H:%M:%S')}
+Status: {message}
+
+SELLER STATUS: OFFLINE ⏳
+No fresh cookies available at this time.
+
+Last saved cookies: {len(self.last_cookies) if self.last_cookies else 0} cookies
+Download last saved: https://tradingview-monitor.onrender.com/download-browser-import
+
+The system continues monitoring and will notify you when the seller comes back online.
+
+This is your hourly update (sent at 42 minutes past each hour).
+Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
+"""
+                        
+                        if self.send_email_notification(subject, email_message):
+                            print("📧 Hourly offline email notification sent!")
+                            self.last_email_sent = datetime.now()
+                        else:
+                            print("❌ Failed to send email notification")
                 
-                # Wait 30 minutes before next check
-                time.sleep(1800)
+                # Wait 5 minutes before next check (to catch 42-minute mark)
+                time.sleep(300)
                 
             except Exception as e:
                 print(f"❌ Error in monitoring loop: {e}")
@@ -250,15 +292,15 @@ def index():
                 <p>Message: <span id="message">Initializing...</span></p>
             </div>
             
-            <div class="info">
-                <h3>📧 Notifications</h3>
-                <p>Major updates are sent every 3 hours. Check the Render.com logs for real-time monitoring updates!</p>
-            </div>
-            
-            <div class="info">
-                <h3>🔄 How It Works</h3>
-                <p>This monitor checks the TradingView seller every 30 minutes and logs notifications when fresh cookies are available.</p>
-            </div>
+             <div class="info">
+                 <h3>📧 Notifications</h3>
+                 <p>Hourly email reports are sent at 42 minutes past each hour (00:42, 01:42, 02:42, etc.) - 24 emails per day!</p>
+             </div>
+             
+             <div class="info">
+                 <h3>🔄 How It Works</h3>
+                 <p>This monitor checks the TradingView seller every 5 minutes and sends hourly email reports at 42 minutes past each hour.</p>
+             </div>
             
             <button class="refresh-btn" onclick="updateStatus()">🔄 Refresh Status</button>
         </div>
