@@ -12,24 +12,25 @@ import time
 import os
 from datetime import datetime, timedelta
 import threading
-from email_notifier import EmailNotifier
+from email_service import EmailService
 
 app = Flask(__name__)
 
 class WebMonitor:
     def __init__(self):
-        self.email_notifier = EmailNotifier("karo.jihad@gmail.com")
+        self.email_service = EmailService()
         self.last_check = None
         self.last_status = None
         self.monitoring = False
         self.last_cookies = None
         self.last_email_sent = None
         self.cookie_file = "tradingview_cookies_cloud.json"
+        self.notification_log = "monitoring_log.txt"
         self.start_monitoring()
     
     def send_email_notification(self, subject, message):
-        """Send email notification using webhook service"""
-        return self.email_notifier.send_notification(subject, message)
+        """Send email notification using improved email service"""
+        return self.email_service.send_notification(subject, message, "karo.jihad@gmail.com")
     
     def check_seller_status(self):
         """Check if seller is online"""
@@ -86,8 +87,12 @@ class WebMonitor:
             self.last_cookies = cookies
             print(f"💾 Saved {len(cookies)} cookies to {self.cookie_file}")
             print(f"🌐 Created browser import file: {import_file}")
+            
+            # Log the cookie save event
+            self.log_event(f"COOKIES SAVED: {len(cookies)} cookies saved at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         except Exception as e:
             print(f"❌ Failed to save cookies: {e}")
+            self.log_event(f"ERROR: Failed to save cookies - {e}")
     
     def load_cookies(self):
         """Load saved cookies from file"""
@@ -109,6 +114,15 @@ class WebMonitor:
         time_since_last = datetime.now() - self.last_email_sent
         return time_since_last.total_seconds() >= 10800  # 3 hours = 10800 seconds
     
+    def log_event(self, message):
+        """Log events to file"""
+        try:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            with open(self.notification_log, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] {message}\n")
+        except Exception as e:
+            print(f"⚠️ Failed to log event: {e}")
+    
     def monitor_loop(self):
         """Background monitoring loop"""
         while self.monitoring:
@@ -118,6 +132,7 @@ class WebMonitor:
                 self.last_status = {"online": is_online, "message": message}
                 
                 print(f"🕐 [{self.last_check.strftime('%H:%M:%S')}] {message}")
+                self.log_event(f"STATUS CHECK: {message}")
                 
                 if is_online:
                     print("🎉 SELLER IS ONLINE!")
@@ -374,6 +389,32 @@ def download_browser_import():
         return jsonify({
             'success': False,
             'message': f'Error loading browser import file: {e}'
+        })
+
+@app.route('/monitoring-log')
+def monitoring_log():
+    """Get the monitoring log"""
+    try:
+        if os.path.exists(monitor.notification_log):
+            with open(monitor.notification_log, 'r', encoding='utf-8') as f:
+                log_content = f.read()
+            
+            return jsonify({
+                'success': True,
+                'log': log_content,
+                'last_check': monitor.last_check.strftime('%Y-%m-%d %H:%M:%S') if monitor.last_check else None,
+                'last_status': monitor.last_status,
+                'cookies_saved': len(monitor.last_cookies) if monitor.last_cookies else 0
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'No monitoring log found'
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error reading monitoring log: {e}'
         })
 
 if __name__ == '__main__':
