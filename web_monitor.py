@@ -130,10 +130,10 @@ class WebMonitor:
                 self.last_check = datetime.now()
                 self.last_status = {"online": is_online, "message": message}
                 
-                 print(f"🕐 [{self.last_check.strftime('%H:%M:%S')}] {message}")
-                 self.log_event(f"STATUS CHECK: {message}")
-                 
-                 if is_online:
+                print(f"🕐 [{self.last_check.strftime('%H:%M:%S')}] {message}")
+                self.log_event(f"STATUS CHECK: {message}")
+                
+                if is_online:
                     print("🎉 SELLER IS ONLINE!")
                     
                     # Send email notification only every 3 hours
