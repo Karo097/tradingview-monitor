@@ -74,10 +74,18 @@ class WebMonitor:
     def save_cookies(self, cookies):
         """Save cookies to file for offline access"""
         try:
+            # Save main cookie file
             with open(self.cookie_file, 'w') as f:
                 json.dump(cookies, f, indent=2)
+            
+            # Also create browser import file
+            import_file = "tradingview_cookies_browser_import.json"
+            with open(import_file, 'w') as f:
+                json.dump(cookies, f, indent=2)
+            
             self.last_cookies = cookies
             print(f"💾 Saved {len(cookies)} cookies to {self.cookie_file}")
+            print(f"🌐 Created browser import file: {import_file}")
         except Exception as e:
             print(f"❌ Failed to save cookies: {e}")
     
@@ -338,6 +346,34 @@ def download_cookies():
         return jsonify({
             'success': False,
             'message': f'Error loading cookies: {e}'
+        })
+
+@app.route('/download-browser-import')
+def download_browser_import():
+    """Download cookies in browser import format"""
+    try:
+        import_file = "tradingview_cookies_browser_import.json"
+        if os.path.exists(import_file):
+            with open(import_file, 'r') as f:
+                cookies = json.load(f)
+            
+            from flask import Response
+            return Response(
+                json.dumps(cookies, indent=2),
+                mimetype='application/json',
+                headers={
+                    'Content-Disposition': 'attachment; filename=tradingview_cookies_import.json'
+                }
+            )
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'No browser import file available'
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error loading browser import file: {e}'
         })
 
 if __name__ == '__main__':
