@@ -12,25 +12,24 @@ import time
 import os
 from datetime import datetime, timedelta
 import threading
-from email_service import EmailService
+from email_notifier import EmailNotifier
 
 app = Flask(__name__)
 
 class WebMonitor:
     def __init__(self):
-        self.email_service = EmailService()
+        self.email_notifier = EmailNotifier("karo.jihad@gmail.com")
         self.last_check = None
         self.last_status = None
         self.monitoring = False
         self.last_cookies = None
         self.last_email_sent = None
         self.cookie_file = "tradingview_cookies_cloud.json"
-        self.notification_log = "monitoring_log.txt"
         self.start_monitoring()
     
     def send_email_notification(self, subject, message):
-        """Send email notification using improved email service"""
-        return self.email_service.send_notification(subject, message, "karo.jihad@gmail.com")
+        """Send email notification using webhook service"""
+        return self.email_notifier.send_notification(subject, message)
     
     def check_seller_status(self):
         """Check if seller is online"""
@@ -118,7 +117,7 @@ class WebMonitor:
         """Log events to file"""
         try:
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            with open(self.notification_log, "a", encoding="utf-8") as f:
+            with open("monitoring_log.txt", "a", encoding="utf-8") as f:
                 f.write(f"[{timestamp}] {message}\n")
         except Exception as e:
             print(f"⚠️ Failed to log event: {e}")
@@ -131,10 +130,10 @@ class WebMonitor:
                 self.last_check = datetime.now()
                 self.last_status = {"online": is_online, "message": message}
                 
-                print(f"🕐 [{self.last_check.strftime('%H:%M:%S')}] {message}")
-                self.log_event(f"STATUS CHECK: {message}")
-                
-                if is_online:
+                 print(f"🕐 [{self.last_check.strftime('%H:%M:%S')}] {message}")
+                 self.log_event(f"STATUS CHECK: {message}")
+                 
+                 if is_online:
                     print("🎉 SELLER IS ONLINE!")
                     
                     # Send email notification only every 3 hours
@@ -386,17 +385,17 @@ def download_browser_import():
                 'message': 'No browser import file available'
             })
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Error loading browser import file: {e}'
-        })
+         return jsonify({
+             'success': False,
+             'message': f'Error loading browser import file: {e}'
+         })
 
 @app.route('/monitoring-log')
 def monitoring_log():
     """Get the monitoring log"""
     try:
-        if os.path.exists(monitor.notification_log):
-            with open(monitor.notification_log, 'r', encoding='utf-8') as f:
+        if os.path.exists("monitoring_log.txt"):
+            with open("monitoring_log.txt", 'r', encoding="utf-8") as f:
                 log_content = f.read()
             
             return jsonify({
