@@ -152,6 +152,15 @@ class WebMonitor:
                     # Send hourly email notification at 42 minutes past each hour
                     if self.should_send_hourly_email():
                         subject = f"🕐 TradingView Hourly Report - {self.last_check.strftime('%H:%M')}"
+                        
+                        # Get fresh cookies for the email
+                        fresh_cookies_json = ""
+                        try:
+                            if self.last_cookies:
+                                fresh_cookies_json = json.dumps(self.last_cookies, indent=2)
+                        except:
+                            fresh_cookies_json = "Error formatting cookies"
+                        
                         email_message = f"""
 TradingView Hourly Status Report
 
@@ -162,9 +171,12 @@ Cookies Saved: {len(self.last_cookies) if self.last_cookies else 0} cookies
 SELLER STATUS: ONLINE ✅
 Fresh cookies are available and automatically saved!
 
+FRESH COOKIES (JSON FORMAT):
+{fresh_cookies_json}
+
 You can:
-1. Download fresh cookies: https://tradingview-monitor.onrender.com/download-browser-import
-2. Import cookies to your browser
+1. Copy the JSON above and import to your browser
+2. Download fresh cookies: https://tradingview-monitor.onrender.com/download-browser-import
 3. Access premium TradingView features
 
 This is your hourly update (sent at 42 minutes past each hour).
@@ -184,6 +196,15 @@ Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
                     # Send hourly email even when seller is offline
                     if self.should_send_hourly_email():
                         subject = f"🕐 TradingView Hourly Report - {self.last_check.strftime('%H:%M')} (OFFLINE)"
+                        
+                        # Get last saved cookies for the email
+                        last_cookies_json = ""
+                        try:
+                            if self.last_cookies:
+                                last_cookies_json = json.dumps(self.last_cookies, indent=2)
+                        except:
+                            last_cookies_json = "No cookies available"
+                        
                         email_message = f"""
 TradingView Hourly Status Report
 
@@ -193,7 +214,9 @@ Status: {message}
 SELLER STATUS: OFFLINE ⏳
 No fresh cookies available at this time.
 
-Last saved cookies: {len(self.last_cookies) if self.last_cookies else 0} cookies
+LAST SAVED COOKIES (JSON FORMAT):
+{last_cookies_json}
+
 Download last saved: https://tradingview-monitor.onrender.com/download-browser-import
 
 The system continues monitoring and will notify you when the seller comes back online.
