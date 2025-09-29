@@ -143,15 +143,15 @@ class WebMonitor:
                 self.last_check = datetime.now()
                 self.last_status = {"online": is_online, "message": message}
                 
-                print(f"🕐 [{self.last_check.strftime('%H:%M:%S')}] {message}")
+                print(f"[{self.last_check.strftime('%H:%M:%S')}] {message}")
                 self.log_event(f"STATUS CHECK: {message}")
                 
                 if is_online:
-                    print("🎉 SELLER IS ONLINE!")
+                    print("SELLER IS ONLINE!")
                     
                     # Send hourly email notification at 42 minutes past each hour
                     if self.should_send_hourly_email():
-                        subject = f"🕐 TradingView Hourly Report - {self.last_check.strftime('%H:%M')}"
+                        subject = f"TradingView Hourly Report - {self.last_check.strftime('%H:%M')}"
                         
                         # Get fresh cookies for the email
                         fresh_cookies_json = ""
@@ -184,18 +184,18 @@ Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
 """
                         
                         if self.send_email_notification(subject, email_message):
-                            print("📧 Hourly email notification sent!")
+                            print("Hourly email notification sent!")
                             self.last_email_sent = datetime.now()
                         else:
-                            print("❌ Failed to send email notification")
+                            print("Failed to send email notification")
                     else:
-                        print("⏰ Email notification skipped (not 42 minutes past hour)")
+                        print("Email notification skipped (not 42 minutes past hour)")
                 else:
-                    print("⏳ Seller is offline. Waiting for next check...")
+                    print("Seller is offline. Waiting for next check...")
                     
                     # Send hourly email even when seller is offline
                     if self.should_send_hourly_email():
-                        subject = f"🕐 TradingView Hourly Report - {self.last_check.strftime('%H:%M')} (OFFLINE)"
+                        subject = f"TradingView Hourly Report - {self.last_check.strftime('%H:%M')} (OFFLINE)"
                         
                         # Get last saved cookies for the email
                         last_cookies_json = ""
@@ -226,16 +226,16 @@ Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
 """
                         
                         if self.send_email_notification(subject, email_message):
-                            print("📧 Hourly offline email notification sent!")
+                            print("Hourly offline email notification sent!")
                             self.last_email_sent = datetime.now()
                         else:
-                            print("❌ Failed to send email notification")
+                            print("Failed to send email notification")
                 
                 # Wait 5 minutes before next check (to catch 42-minute mark)
                 time.sleep(300)
                 
             except Exception as e:
-                print(f"❌ Error in monitoring loop: {e}")
+                print(f"Error in monitoring loop: {e}")
                 time.sleep(60)  # Wait 1 minute before retrying
     
     def start_monitoring(self):
@@ -244,7 +244,7 @@ Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
             self.monitoring = True
             monitor_thread = threading.Thread(target=self.monitor_loop, daemon=True)
             monitor_thread.start()
-            print("🚀 Monitoring started!")
+            print("Monitoring started!")
 
 # Global monitor instance
 monitor = WebMonitor()
