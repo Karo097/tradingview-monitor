@@ -12,8 +12,8 @@ class EmailNotifier:
     def __init__(self, recipient_email="karo.jihad@gmail.com"):
         self.recipient_email = recipient_email
         # Telegram bot configuration (replace with your bot token and chat ID)
-        self.telegram_bot_token = "YOUR_BOT_TOKEN_HERE"  # Get from @BotFather
-        self.telegram_chat_id = "YOUR_CHAT_ID_HERE"  # Get from /getUpdates
+        self.telegram_bot_token = "7405449740:AAFWd4zQYqr8JyRTPB5jQ0oPV_D00ep28Ms"  # Get from @BotFather
+        self.telegram_chat_id = 135957299  # Get from /getUpdates
         self.telegram_url = f"https://api.telegram.org/bot{self.telegram_bot_token}/sendMessage"
     
     def send_notification(self, subject, message):
@@ -70,12 +70,12 @@ class EmailNotifier:
     def _log_notification(self, subject, message):
         """Log notification details"""
         print("=" * 50)
-        print("🔔 TRADINGVIEW NOTIFICATION")
+        print("TRADINGVIEW NOTIFICATION")
         print("=" * 50)
-        print(f"📧 To: {self.recipient_email}")
-        print(f"📝 Subject: {subject}")
-        print(f"⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"📄 Message: {message}")
+        print(f"To: {self.recipient_email}")
+        print(f"Subject: {subject}")
+        print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Message: {message}")
         print("=" * 50)
     
 
