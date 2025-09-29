@@ -105,26 +105,6 @@ class WebMonitor:
             print(f"Failed to load cookies: {e}")
             return None
     
-    def should_send_hourly_email(self):
-        """Check if it's time to send an hourly email (at 42 minutes past each hour)"""
-        now = datetime.now()
-        current_minute = now.minute
-        
-        # Check if it's exactly 42 minutes past the hour
-        if current_minute == 42:
-            # Check if we already sent an email this hour
-            if self.last_email_sent is None:
-                return True
-            
-            # Check if the last email was sent in a different hour
-            last_hour = self.last_email_sent.hour
-            current_hour = now.hour
-            
-            # If it's a new hour (or new day), send email
-            if current_hour != last_hour:
-                return True
-        
-        return False
     
     def log_event(self, message):
         """Log events to file"""
@@ -136,22 +116,27 @@ class WebMonitor:
             print(f"Failed to log event: {e}")
     
     def monitor_loop(self):
-        """Background monitoring loop"""
+        """Background monitoring loop - only checks at 42 minutes past each hour"""
         while self.monitoring:
             try:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] Starting status check...")
-                is_online, message = self.check_seller_status()
-                self.last_check = datetime.now()
-                self.last_status = {"online": is_online, "message": message}
+                now = datetime.now()
+                current_minute = now.minute
                 
-                print(f"[{self.last_check.strftime('%H:%M:%S')}] {message}")
-                self.log_event(f"STATUS CHECK: {message}")
-                
-                if is_online:
-                    print("SELLER IS ONLINE!")
+                # Only check if it's 42 minutes past the hour
+                if current_minute == 42:
+                    print(f"[{now.strftime('%H:%M:%S')}] Hourly check time - checking seller status...")
                     
-                    # Send hourly email notification at 42 minutes past each hour
-                    if self.should_send_hourly_email():
+                    is_online, message = self.check_seller_status()
+                    self.last_check = now
+                    self.last_status = {"online": is_online, "message": message}
+                    
+                    print(f"[{self.last_check.strftime('%H:%M:%S')}] {message}")
+                    self.log_event(f"STATUS CHECK: {message}")
+                    
+                    if is_online:
+                        print("SELLER IS ONLINE!")
+                        
+                        # Send hourly email notification
                         subject = f"TradingView Hourly Report - {self.last_check.strftime('%H:%M')}"
                         
                         # Get fresh cookies for the email
@@ -181,7 +166,7 @@ You can:
 3. Access premium TradingView features
 
 This is your hourly update (sent at 42 minutes past each hour).
-Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
+Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%M')}
 """
                         
                         if self.send_email_notification(subject, email_message):
@@ -190,12 +175,9 @@ Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
                         else:
                             print("Failed to send email notification")
                     else:
-                        print("Email notification skipped (not 42 minutes past hour)")
-                else:
-                    print("Seller is offline. Waiting for next check...")
-                    
-                    # Send hourly email even when seller is offline
-                    if self.should_send_hourly_email():
+                        print("Seller is offline.")
+                        
+                        # Send hourly email even when seller is offline
                         subject = f"TradingView Hourly Report - {self.last_check.strftime('%H:%M')} (OFFLINE)"
                         
                         # Get last saved cookies for the email
@@ -223,7 +205,7 @@ Download last saved: https://tradingview-monitor.onrender.com/download-browser-i
 The system continues monitoring and will notify you when the seller comes back online.
 
 This is your hourly update (sent at 42 minutes past each hour).
-Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
+Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%M')}
 """
                         
                         if self.send_email_notification(subject, email_message):
@@ -231,9 +213,22 @@ Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
                             self.last_email_sent = datetime.now()
                         else:
                             print("Failed to send email notification")
-                
-                # Wait 5 minutes before next check (to catch 42-minute mark)
-                time.sleep(300)
+                    
+                    # Wait until next hour to avoid multiple checks in the same minute
+                    next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+                    wait_seconds = (next_hour - now).total_seconds()
+                    print(f"Waiting {wait_seconds/60:.1f} minutes until next check...")
+                    time.sleep(wait_seconds)
+                else:
+                    # Calculate seconds until next 42-minute mark
+                    if current_minute < 42:
+                        next_42 = now.replace(minute=42, second=0, microsecond=0)
+                    else:
+                        next_42 = now.replace(hour=now.hour + 1, minute=42, second=0, microsecond=0)
+                    
+                    wait_seconds = (next_42 - now).total_seconds()
+                    print(f"[{now.strftime('%H:%M:%S')}] Waiting {wait_seconds/60:.1f} minutes until next check at {next_42.strftime('%H:%M')}...")
+                    time.sleep(wait_seconds)
                 
             except Exception as e:
                 print(f"Error in monitoring loop: {e}")
@@ -324,7 +319,7 @@ def index():
              
              <div class="info">
                  <h3>How It Works</h3>
-                 <p>This monitor checks the TradingView seller every 5 minutes and sends hourly email reports at 42 minutes past each hour.</p>
+                 <p>This monitor checks the TradingView seller only at 42 minutes past each hour and sends hourly email reports with fresh cookies.</p>
              </div>
             
             <button class="refresh-btn" onclick="updateStatus()">Refresh Status</button>
