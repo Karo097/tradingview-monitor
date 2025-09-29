@@ -84,13 +84,13 @@ class WebMonitor:
                 json.dump(cookies, f, indent=2)
             
             self.last_cookies = cookies
-            print(f"💾 Saved {len(cookies)} cookies to {self.cookie_file}")
-            print(f"🌐 Created browser import file: {import_file}")
+            print(f"Saved {len(cookies)} cookies to {self.cookie_file}")
+            print(f"Created browser import file: {import_file}")
             
             # Log the cookie save event
             self.log_event(f"COOKIES SAVED: {len(cookies)} cookies saved at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         except Exception as e:
-            print(f"❌ Failed to save cookies: {e}")
+            print(f"Failed to save cookies: {e}")
             self.log_event(f"ERROR: Failed to save cookies - {e}")
     
     def load_cookies(self):
@@ -99,10 +99,10 @@ class WebMonitor:
             with open(self.cookie_file, 'r') as f:
                 cookies = json.load(f)
             self.last_cookies = cookies
-            print(f"📂 Loaded {len(cookies)} cookies from {self.cookie_file}")
+            print(f"Loaded {len(cookies)} cookies from {self.cookie_file}")
             return cookies
         except Exception as e:
-            print(f"❌ Failed to load cookies: {e}")
+            print(f"Failed to load cookies: {e}")
             return None
     
     def should_send_hourly_email(self):
@@ -133,12 +133,13 @@ class WebMonitor:
             with open("monitoring_log.txt", "a", encoding="utf-8") as f:
                 f.write(f"[{timestamp}] {message}\n")
         except Exception as e:
-            print(f"⚠️ Failed to log event: {e}")
+            print(f"Failed to log event: {e}")
     
     def monitor_loop(self):
         """Background monitoring loop"""
         while self.monitoring:
             try:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Starting status check...")
                 is_online, message = self.check_seller_status()
                 self.last_check = datetime.now()
                 self.last_status = {"online": is_online, "message": message}
@@ -168,7 +169,7 @@ Time: {self.last_check.strftime('%Y-%m-%d %H:%M:%S')}
 Status: {message}
 Cookies Saved: {len(self.last_cookies) if self.last_cookies else 0} cookies
 
-SELLER STATUS: ONLINE ✅
+SELLER STATUS: ONLINE
 Fresh cookies are available and automatically saved!
 
 FRESH COOKIES (JSON FORMAT):
@@ -211,7 +212,7 @@ TradingView Hourly Status Report
 Time: {self.last_check.strftime('%Y-%m-%d %H:%M:%S')}
 Status: {message}
 
-SELLER STATUS: OFFLINE ⏳
+SELLER STATUS: OFFLINE
 No fresh cookies available at this time.
 
 LAST SAVED COOKIES (JSON FORMAT):
@@ -236,6 +237,7 @@ Next update: {(self.last_check + timedelta(hours=1)).strftime('%H:%42')}
                 
             except Exception as e:
                 print(f"Error in monitoring loop: {e}")
+                self.log_event(f"ERROR: Monitoring loop error - {e}")
                 time.sleep(60)  # Wait 1 minute before retrying
     
     def start_monitoring(self):
@@ -307,7 +309,7 @@ def index():
     </head>
     <body>
         <div class="container">
-            <h1>🎯 TradingView Cookie Monitor</h1>
+            <h1>TradingView Cookie Monitor</h1>
             
             <div id="status" class="status info">
                 <h3>Status: Checking...</h3>
@@ -316,16 +318,16 @@ def index():
             </div>
             
              <div class="info">
-                 <h3>📧 Notifications</h3>
+                 <h3>Notifications</h3>
                  <p>Hourly email reports are sent at 42 minutes past each hour (00:42, 01:42, 02:42, etc.) - 24 emails per day!</p>
              </div>
              
              <div class="info">
-                 <h3>🔄 How It Works</h3>
+                 <h3>How It Works</h3>
                  <p>This monitor checks the TradingView seller every 5 minutes and sends hourly email reports at 42 minutes past each hour.</p>
              </div>
             
-            <button class="refresh-btn" onclick="updateStatus()">🔄 Refresh Status</button>
+            <button class="refresh-btn" onclick="updateStatus()">Refresh Status</button>
         </div>
         
         <script>
@@ -339,10 +341,10 @@ def index():
                         
                         if (data.online) {
                             statusDiv.className = 'status online';
-                            statusDiv.innerHTML = '<h3>🎉 Status: SELLER IS ONLINE!</h3><p>Fresh cookies are available!</p>';
+                            statusDiv.innerHTML = '<h3>Status: SELLER IS ONLINE!</h3><p>Fresh cookies are available!</p>';
                         } else {
                             statusDiv.className = 'status offline';
-                            statusDiv.innerHTML = '<h3>⏳ Status: Seller is offline</h3><p>Waiting for seller to come online...</p>';
+                            statusDiv.innerHTML = '<h3>Status: Seller is offline</h3><p>Waiting for seller to come online...</p>';
                         }
                         
                         lastCheckSpan.textContent = data.last_check || 'Never';
@@ -350,7 +352,7 @@ def index():
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        document.getElementById('status').innerHTML = '<h3>❌ Error loading status</h3>';
+                        document.getElementById('status').innerHTML = '<h3>Error loading status</h3>';
                     });
             }
             
