@@ -11,16 +11,16 @@ from datetime import datetime
 class EmailNotifier:
     def __init__(self, recipient_email="karo.jihad@gmail.com"):
         self.recipient_email = recipient_email
-        self.webhook_urls = [
-            "https://hooks.zapier.com/hooks/catch/1234567890/abcdefgh/",  # Placeholder
-            "https://api.telegram.org/bot1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ/sendMessage"  # Placeholder
-        ]
+        # Telegram bot configuration (replace with your bot token and chat ID)
+        self.telegram_bot_token = "YOUR_BOT_TOKEN_HERE"  # Get from @BotFather
+        self.telegram_chat_id = "YOUR_CHAT_ID_HERE"  # Get from /getUpdates
+        self.telegram_url = f"https://api.telegram.org/bot{self.telegram_bot_token}/sendMessage"
     
     def send_notification(self, subject, message):
-        """Send notification using EmailJS or webhook services"""
+        """Send notification using Telegram bot or fallback to logging"""
         try:
-            # Try EmailJS first (works with Render.com)
-            if self._try_emailjs(subject, message):
+            # Try Telegram bot first (works with Render.com free tier)
+            if self._try_telegram(subject, message):
                 return True
             
             # Fallback to logging
@@ -28,31 +28,43 @@ class EmailNotifier:
             return True
             
         except Exception as e:
-            print(f"❌ Notification failed: {e}")
+            print(f"Notification failed: {e}")
             return False
     
-    def _try_emailjs(self, subject, message):
-        """Try to send email using EmailJS"""
+    def _try_telegram(self, subject, message):
+        """Try to send notification via Telegram bot"""
         try:
-            # EmailJS configuration (you can set this up for free)
-            emailjs_data = {
-                "service_id": "service_123456",  # Replace with your EmailJS service ID
-                "template_id": "template_123456",  # Replace with your EmailJS template ID
-                "user_id": "user_123456",  # Replace with your EmailJS user ID
-                "template_params": {
-                    "to_email": self.recipient_email,
-                    "subject": subject,
-                    "message": message,
-                    "from_name": "TradingView Monitor"
-                }
+            # Check if Telegram bot is configured
+            if (self.telegram_bot_token == "YOUR_BOT_TOKEN_HERE" or 
+                self.telegram_chat_id == "YOUR_CHAT_ID_HERE"):
+                print("Telegram bot not configured. Please set up bot token and chat ID.")
+                return False
+            
+            # Prepare Telegram message
+            telegram_message = f"*{subject}*\n\n{message}"
+            
+            # Send to Telegram
+            payload = {
+                "chat_id": self.telegram_chat_id,
+                "text": telegram_message,
+                "parse_mode": "Markdown"
             }
             
-            # For now, just log since we don't have EmailJS configured
-            print("📧 EmailJS notification (configured for future use)")
-            return False
+            response = requests.post(
+                self.telegram_url,
+                json=payload,
+                timeout=10
+            )
             
+            if response.status_code == 200:
+                print(f"Telegram notification sent: {subject}")
+                return True
+            else:
+                print(f"Telegram failed: {response.status_code} - {response.text}")
+                return False
+                
         except Exception as e:
-            print(f"⚠️ EmailJS failed: {e}")
+            print(f"Telegram notification failed: {e}")
             return False
     
     def _log_notification(self, subject, message):
@@ -66,24 +78,6 @@ class EmailNotifier:
         print(f"📄 Message: {message}")
         print("=" * 50)
     
-    def _try_webhook_notification(self, data):
-        """Try to send notification via webhook"""
-        try:
-            # This is a placeholder for webhook integration
-            # You can set up services like:
-            # - Zapier webhooks
-            # - Telegram bot
-            # - Discord webhooks
-            # - Slack webhooks
-            
-            print("💡 To get real-time notifications, set up:")
-            print("   1. Telegram bot (free)")
-            print("   2. Discord webhook (free)")
-            print("   3. Zapier webhook (free tier)")
-            print("   4. Slack webhook (free)")
-            
-        except Exception as e:
-            print(f"⚠️ Webhook notification failed: {e}")
 
 # Example usage
 if __name__ == "__main__":

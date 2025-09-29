@@ -249,7 +249,18 @@ monitor = WebMonitor()
 @app.route('/')
 def index():
     """Main page"""
-    html_template = """
+    return render_template_string(HTML_TEMPLATE)
+
+@app.route('/keep-alive')
+def keep_alive():
+    """Keep-alive endpoint to prevent Render.com from sleeping"""
+    return jsonify({
+        "status": "alive",
+        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "monitoring": monitor.monitoring
+    })
+
+HTML_TEMPLATE = """
     <!DOCTYPE html>
     <html>
     <head>
