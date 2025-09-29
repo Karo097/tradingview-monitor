@@ -1,0 +1,33 @@
+name: TradingView Hourly Check
+
+on:
+  schedule:
+    - cron: '42 * * * *'  # Every hour at 42 minutes past the hour
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        pip install requests
+        
+    - name: Run TradingView hourly check
+      run: python tradingview_hourly_check.py
+      
+    - name: Upload cookies file (if created)
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: tradingview-cookies-${{ github.run_number }}
+        path: tradingview_cookies.json
+        retention-days: 7
