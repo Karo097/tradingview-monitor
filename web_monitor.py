@@ -315,7 +315,7 @@ HTML_TEMPLATE = """
     </head>
     <body>
         <div class="container">
-            <h1>TradingView Cookie Monitor</h1>
+            <h1>TradingView Cookie Monitor v2.0</h1>
             
             <div id="status" class="status info">
                 <h3>Status: Checking...</h3>
