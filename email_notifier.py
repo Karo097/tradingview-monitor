@@ -13,7 +13,7 @@ class EmailNotifier:
         self.recipient_email = recipient_email
         # Telegram bot configuration (replace with your bot token and chat ID)
         self.telegram_bot_token = "7405449740:AAFWd4zQYqr8JyRTPB5jQ0oPV_D00ep28Ms"  # Get from @BotFather
-        self.telegram_chat_id = 135957299  # Get from /getUpdates
+        self.telegram_chat_id = 780489145  # Get from /getUpdates
         self.telegram_url = f"https://api.telegram.org/bot{self.telegram_bot_token}/sendMessage"
     
     def send_notification(self, subject, message):
