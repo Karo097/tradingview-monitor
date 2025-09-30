@@ -10,7 +10,7 @@ import json
 import re
 import html
 from datetime import datetime
-from email_notifier import EmailNotifier
+# Email notifications removed - using Telegram only
 
 def check_seller_status():
     """Check if seller is online and get fresh cookies"""
@@ -85,11 +85,13 @@ def load_last_cookies():
 def send_hourly_notification(is_online, message, fresh_cookies):
     """Send hourly notification via Telegram"""
     try:
-        notifier = EmailNotifier()
+        # Telegram bot configuration
+        TELEGRAM_BOT_TOKEN = "7405449740:AAFWd4zQYqr8JyRTPB5jQ0oPV_D00ep28Ms"
+        TELEGRAM_CHAT_ID = 780489145
+        TELEGRAM_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         
         # Prepare notification
         current_time = datetime.now()
-        subject = f"TradingView Hourly Report - {current_time.strftime('%H:%M')}"
         
         if is_online and fresh_cookies:
             # Seller is online with fresh cookies - send shorter message
@@ -129,15 +131,24 @@ The system continues monitoring and will notify you when the seller comes back o
 Next update: {(current_time.replace(minute=42, second=0, microsecond=0) + timedelta(hours=1)).strftime('%H:%M')}
 """
         
-        # Send notification
-        success = notifier.send_notification(subject, notification_message)
+        # Send notification via Telegram
+        payload = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": notification_message
+        }
         
-        if success:
+        response = requests.post(
+            TELEGRAM_URL,
+            json=payload,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
             print("Hourly notification sent successfully!")
+            return True
         else:
-            print("Failed to send notification")
-            
-        return success
+            print(f"Failed to send notification: {response.status_code}")
+            return False
         
     except Exception as e:
         print(f"Error sending notification: {e}")
