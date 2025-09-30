@@ -24,10 +24,12 @@ jobs:
     - name: Run TradingView hourly check
       run: python tradingview_hourly_check.py
       
-    - name: Upload cookies file (if created)
+    - name: Upload cookies files (if created)
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: tradingview-cookies-${{ github.run_number }}
-        path: tradingview_cookies.json
+        path: |
+          tradingview_cookies.json
+          tradingview_cookies_*.json
         retention-days: 7

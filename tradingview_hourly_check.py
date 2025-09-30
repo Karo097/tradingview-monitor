@@ -57,11 +57,19 @@ def check_seller_status():
         return False, f"Error: {e}", None
 
 def save_cookies(cookies):
-    """Save cookies to file"""
+    """Save cookies to file with timestamp"""
     try:
+        # Save to main file
         with open('tradingview_cookies.json', 'w') as f:
             json.dump(cookies, f, indent=2)
-        print(f"Saved {len(cookies)} cookies to tradingview_cookies.json")
+        
+        # Save to timestamped file for history
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamped_file = f'tradingview_cookies_{timestamp}.json'
+        with open(timestamped_file, 'w') as f:
+            json.dump(cookies, f, indent=2)
+        
+        print(f"Saved {len(cookies)} cookies to tradingview_cookies.json and {timestamped_file}")
     except Exception as e:
         print(f"Error saving cookies: {e}")
 
